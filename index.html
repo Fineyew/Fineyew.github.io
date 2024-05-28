@@ -145,6 +145,7 @@
     <div class="container page active" id="home">
         <h1>Hello, this is a test site. It will develop along with my skills.</h1>
         <p>Score: <span id="score">0</span></p>
+        <button id="toggle-button">Pause</button>
         <div id="game-container">
             <div id="paddle"></div>
             <div class="ball" id="ball"></div>
@@ -176,6 +177,7 @@
         const paddle = document.getElementById('paddle');
         const ball = document.getElementById('ball');
         const scoreDisplay = document.getElementById('score');
+        const toggleButton = document.getElementById('toggle-button');
         let score = 0;
         let ballX = gameContainer.offsetWidth / 2;
         let ballY = gameContainer.offsetHeight / 2;
@@ -187,6 +189,8 @@
         let bricks = [];
         const rows = 5;
         const cols = 6;
+        let gameInterval;
+        let isPaused = false;
 
         // Paddle control
         document.addEventListener('mousemove', (event) => {
@@ -265,15 +269,11 @@
             }
         }
 
-        // Start the game
-        function startGame() {
-            createBricks();
-            const interval = setInterval(() => {
-                moveBall();
-            }, 10);
-        }
-
-        startGame();
-    </script>
-</body>
-</html>
+        // Toggle play/pause
+        function toggleGame() {
+            if (isPaused) {
+                gameInterval = setInterval(moveBall, 10);
+                toggleButton.textContent = 'Pause';
+            } else {
+                clearInterval(gameInterval);
+                toggleButton.textContent = '
