@@ -1,1 +1,279 @@
-index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Site Launch Pad</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+        .container {
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 800px;
+        }
+        h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        p {
+            font-size: 1.2em;
+            color: #333;
+        }
+        #game-container {
+            margin-top: 20px;
+            position: relative;
+            width: 500px;
+            height: 500px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+            overflow: hidden;
+        }
+        #paddle {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            width: 100px;
+            height: 10px;
+            background-color: #007BFF;
+            transform: translateX(-50%);
+        }
+        .ball {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background-color: #ff5722;
+            border-radius: 50%;
+        }
+        .brick {
+            position: absolute;
+            width: 75px;
+            height: 20px;
+            background-color: #4CAF50;
+            margin: 2px;
+        }
+        .navbar {
+            width: 100%;
+            background-color: #333;
+            overflow: hidden;
+        }
+        .navbar a {
+            float: left;
+            display: block;
+            color: white;
+            text-align: center;
+            padding: 14px 20px;
+            text-decoration: none;
+        }
+        .dropdown {
+            float: right;
+            overflow: hidden;
+        }
+        .dropdown .dropbtn {
+            cursor: pointer;
+            font-size: 16px;
+            border: none;
+            outline: none;
+            color: white;
+            padding: 14px 20px;
+            background-color: inherit;
+            font-family: inherit;
+            margin: 0;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+        }
+        .dropdown-content a {
+            float: none;
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            text-align: left;
+        }
+        .dropdown-content a:hover {
+            background-color: #ddd;
+        }
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+        #code-editor {
+            width: 100%;
+            height: 400px;
+            border: 1px solid #ccc;
+            font-family: monospace;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .page {
+            display: none;
+        }
+        .page.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="dropdown">
+            <button class="dropbtn">Menu</button>
+            <div class="dropdown-content">
+                <a href="#" onclick="showPage('home')">Home</a>
+                <a href="#" onclick="showPage('testing')">Testing</a>
+                <a href="#" onclick="showPage('bots')">Bots</a>
+            </div>
+        </div>
+    </div>
+    <div class="container page active" id="home">
+        <h1>Hello, this is a test site. It will develop along with my skills.</h1>
+        <p>Score: <span id="score">0</span></p>
+        <button id="toggle-button">Pause</button>
+        <div id="game-container">
+            <div id="paddle"></div>
+            <div class="ball" id="ball"></div>
+        </div>
+    </div>
+    <div class="container page" id="testing">
+        <h1>Testing</h1>
+        <p>This page will be used for testing new features.</p>
+    </div>
+    <div class="container page" id="bots">
+        <h1>Bots</h1>
+        <p>Use the editor below to add bot codes:</p>
+        <textarea id="code-editor"></textarea>
+    </div>
+
+    <script>
+        function showPage(pageId) {
+            const pages = document.querySelectorAll('.page');
+            pages.forEach(page => {
+                if (page.id === pageId) {
+                    page.classList.add('active');
+                } else {
+                    page.classList.remove('active');
+                }
+            });
+        }
+
+        const gameContainer = document.getElementById('game-container');
+        const paddle = document.getElementById('paddle');
+        const ball = document.getElementById('ball');
+        const scoreDisplay = document.getElementById('score');
+        const toggleButton = document.getElementById('toggle-button');
+        let score = 0;
+        let ballX = gameContainer.offsetWidth / 2;
+        let ballY = gameContainer.offsetHeight / 2;
+        let ballDX = 2;
+        let ballDY = -2;
+        let paddleWidth = 100;
+        let paddleHeight = 10;
+        let ballRadius = 7.5;
+        let bricks = [];
+        const rows = 5;
+        const cols = 6;
+        let gameInterval;
+        let isPaused = false;
+
+        // Paddle control
+        document.addEventListener('mousemove', (event) => {
+            const rect = gameContainer.getBoundingClientRect();
+            let x = event.clientX - rect.left - paddle.offsetWidth / 2;
+            x = Math.max(0, Math.min(x, rect.width - paddle.offsetWidth));
+            paddle.style.left = x + 'px';
+        });
+
+        // Create bricks
+        function createBricks() {
+            for (let r = 0; r < rows; r++) {
+                bricks[r] = [];
+                for (let c = 0; c < cols; c++) {
+                    const brick = document.createElement('div');
+                    brick.classList.add('brick');
+                    brick.style.left = (c * (75 + 2)) + 'px';
+                    brick.style.top = (r * (20 + 2)) + 'px';
+                    gameContainer.appendChild(brick);
+                    bricks[r][c] = { element: brick, status: 1 };
+                }
+            }
+        }
+
+        // Move the ball
+        function moveBall() {
+            ballX += ballDX;
+            ballY += ballDY;
+            ball.style.left = ballX + 'px';
+            ball.style.top = ballY + 'px';
+
+            // Collision detection with walls
+            if (ballX + ballRadius > gameContainer.offsetWidth || ballX - ballRadius < 0) {
+                ballDX = -ballDX;
+            }
+            if (ballY - ballRadius < 0) {
+                ballDY = -ballDY;
+            }
+            if (ballY + ballRadius > gameContainer.offsetHeight) {
+                // Game Over
+                alert('Game Over!');
+                document.location.reload();
+            }
+
+            // Collision detection with paddle
+            const paddleRect = paddle.getBoundingClientRect();
+            const ballRect = ball.getBoundingClientRect();
+            if (ballRect.bottom >= paddleRect.top &&
+                ballRect.left >= paddleRect.left &&
+                ballRect.right <= paddleRect.right) {
+                ballDY = -ballDY;
+            }
+
+            // Collision detection with bricks
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const brick = bricks[r][c];
+                    if (brick.status === 1) {
+                        const brickRect = brick.element.getBoundingClientRect();
+                        if (ballRect.top <= brickRect.bottom &&
+                            ballRect.bottom >= brickRect.top &&
+                            ballRect.left >= brickRect.left &&
+                            ballRect.right <= brickRect.right) {
+                            ballDY = -ballDY;
+                            brick.status = 0;
+                            gameContainer.removeChild(brick.element);
+                            score++;
+                            scoreDisplay.textContent = score;
+                            if (score === rows * cols) {
+                                alert('You Win!');
+                                document.location.reload();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Toggle play/pause
+        function toggleGame() {
+            if (isPaused) {
+                gameInterval = setInterval(moveBall, 10);
+                toggleButton.textContent = 'Pause';
+            } else {
+                clearInterval(gameInterval);
+                toggleButton.textContent = '
